@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Github Repositories Listing Page</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body style="margin: 40px 40px 60px 40px">
+    <img id="avatar" src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" alt="@github_logo"
+        style="width: 215px; height: 215px; border-radius: 215px; float: left; margin: 0px 60px 0px 20px;"><br>
+    <h1 id="fullname" style="font-family: roboto condensed; margin-bottom: 15px; margin-top: 0px ">Rohit Singh</h1>
+    <p id="description" style="margin-bottom: 15px;">Bio goes here</p>
+    <p style="margin: 15px 0px;"><i class="material-icons" style="float: left">place</i>&ensp;<span
+            id="user-location">Location</span></p>
+    <p style="margin: 15px">Twitter UserName: <span id="user-username">twitter</span></p><br><br>
+    <div class="links" style="margin: 15px">
+        <p><i class="material-icons" style="float: left">link</i> <a href="#" target="_blank">&ensp;<span
+                    id="user-url">https://github.com/rohit_singh</span></a></p>
+    </div>
+    <div class="grid-container">
+        <div class="grid-item">
+            <h2>Project</h2>
+            <p>Description about the project done</p>
+            <div class="highlight">Language</div>
+        </div>
+        <div class="grid-item">
+            <h2>Project</h2>
+            <p>Description about the project done</p>
+            <div class="highlight">Language</div>
+        </div>
+        <!-- Add more grid items as needed -->
+    </div>
+    <div class="container">
+        <a onclick="shiftLeft()">&laquo;</a>
+        <div class="pagination">
+        </div>
+        <a onclick="shiftRight()">&raquo;</a>
+    </div>
+    <div class="box button-older">
+        <button onclick="prevPage()" style="color: #808080; float: left; background-color: white; border-radius: 20px;
+            border: 1px solid #808080; padding: 5px 20px 5px 20px">&larr;Older</button>
+    </div>
+    <div class="box button-newer">
+        <button onclick="nextPage()" style="color: #0085b6; float: right; background-color: white; border-radius: 20px;
+            border: 1px solid #808080; padding: 5px 20px 5px 20px">Newer&rarr;</button>
+    </div>
+    <script>
+        window.onload = initialize;
+        var userData = {};
+        var pageCount;
+        var movement = 0;
+        var currentPage = 0;
+
+        function showRepositories(pageNumber) {
+            var pageNum = parseInt(pageNumber);
+            document.querySelector(".grid-container").innerHTML = userData[pageNum - 1];
+        }
+
+        async function initialize() {
+            var username = await window.prompt("Enter Username: ");
+            var response = await fetch("https://api.github.com/users/" + username);
+            var user = await response.json();
+            console.log(user);
+            document.getElementById("avatar").src = user["avatar_url"];
+            document.getElementById("description").innerHTML = user["bio"];
+            document.getElementById("user-location").innerHTML = user["location"];
+            document.getElementById("fullname").innerHTML = user["name"];
+            document.getElementById("user-url").innerHTML = user["html_url"];
+            document.getElementById("user-username").innerHTML = user["twitter_username"];
+
+            var reposResponse = await fetch("https://api.github.com/users/" + username + "/repos");
+            var repositories = await reposResponse.json();
+            pageCount = Math.ceil(repositories.length / 10);
+            var displayHtml = "";
+            console.log(repositories);
+            repositories.map((repo, pos) => {
+                var tempData = `<div class="grid-item"><h2>${repo['name']}</h2>`;
+                if (repo["description"] == null) tempData += `<p></p>`;
+                else tempData += `<p>${repo['description']}</p>`;
+                if (repo["language"] == null) tempData += "</div>";
+                else tempData += `<div class="highlight">${repo['language']}</div></div>`;
+                var key = Math.floor(pos / 10);
+                if (userData[key] != undefined) {
+                    userData[key] += tempData;
+                } else {
+                    userData[key] = tempData;
+                }
+            });
+            console.log(userData);
+            generatePagination();
+            showRepositories(1);
+        }
+
+        function shiftLeft() {
+            if (-currentPage < pageCount - 6) {
+                movement -= 35;
+                currentPage -= 1;
+                document.querySelector(".container .pagination").style.marginLeft = movement.toString() + "px";
+            }
+        }
+
+        function shiftRight() {
+            if (currentPage < 0) {
+                currentPage += 1;
+                movement += 35;
+                document.querySelector(".container .pagination").style.marginLeft = movement.toString() + "px";
+            }
+        }
+
+        function generatePagination() {
+            var links = "<div class='pagination'>";
+            for (var i = 1; i <= pageCount; i++)
+                links += `<a onclick='showRepositories(${i})'>${i}</a>`;
+            document.querySelector(".container .pagination").innerHTML = links + "</div>";
+        }
+    </script>
+</body>
+
+</html>
